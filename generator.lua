@@ -7,52 +7,6 @@ local io = require "io"
 -- cells for a "blocker" which kills LWSSes
 local blocker = {2,0, 3,0, 1,1, 3,1, 1,2, 0,3, 1,3}
 
--- initial tiniest tape within world
-g.putcells(g.parse([[
-56bo$55bo2bo$42b2o10b5o10b2o$42b2o9b2ob3o10b2o$54bob2o$55b2o2$55b2o8b
-2o$54bob2o6b3obo$53b2ob3o4bo4b3o$54b5o5b3obo$55bo2bo6b2o$56bo2$48bo30b
-2o$48bobo28b2o$48b2o5$9b2o$2b3o4b2o50b2o$60b2o$bo3bo56bo$bo3bo31bo$2bo
-bo31bo$2b3o31b3o$72b2o5b2o$71bo2bo3bo2bo$74b2ob2o$73bobobobo$73bobobob
-o$2bo7bo60bo9bo$ob2o5b2obo53b2o2bo11bo$o3b2ob2o3bo54b2o$bo3bobo3bo54bo
-7b2ob2o$2b3o3b3o14bo46bo2bobo2bo$25bobo44b3o3b3o$25b2o2$72b2o$72b2o3$
-55bo$55b2o$54bobo4$22bo$23bo$21b3o$10b3o3b3o$9bo3bobo3bo$8bo3b2ob2o3bo
-$8bob2o5b2obo22b2o$10bo7bo25b2o$43bo4$34bo$10b3o19bobo$10bobo20b2o$9bo
-3bo15b2o$9bo3bo15b2o2$10b3o4b2o$17b2o$30bo5bo$29b3o3b3o$28b2o2bobo2b2o
-$28b2ob2ob2ob2o$31b2ob2o$29bobo3bobo$28bo2bo3bo2bo$31bo3bo52b2o$28bobo
-5bobo49b2o$29bo7bo3$30bo$29bobo2$27bo5bo$30bo$27b2o3b2o3$81b3o3b3o$27b
-2o3b2o47b3o3b3o$30bo5b2o42bob2o3b2obo$27bo5bo2b2o42bob2o3b2obo$81b2o5b
-2o$29bobo50bo5bo$30bo3$83b2ob2o$82bo5bo$80b2ob2ob5o$80b2ob2ob3ob2o$82b
-o6b3o$88bobo$88b2o!
-]]))
-
--- note down locations of all components of initial tape
-local tapes = {
-  {
-    initial = {
-      {21,51,3,3},
-      {32,63,3,3},
-    },
-    arm1 = {
-      {43,57,3,3},
-      {54,45,3,3},
-      {66,34,3,3},
-    },
-    between = {
-      {60,22,3,3},
-    },
-    arm2 = {
-      {48,14,3,3},
-      {36,25,3,3},
-      {25,37,3,3},
-    },
-    reflector_n_p1 = {42,0,29,13},
-    reflector_n_p2 = {70,14,13,29},
-    duplicator = {0,21,21,50},
-    reflector_s = {27,66,12,32},
-    lwss_builder = {80,78,12,29},
-  }
-}
-
 -- utilities for moving, clearing, and copying areas
 local function rect_move(rect, dx, dy)
   local cells = g.getcells(rect)
@@ -168,7 +122,7 @@ end
 -- create n tapes, with appropriate mirroring
 local function create_tapes(n)
   local old_tape = tapes[#tapes]
-  for j=1,n/2 do
+  for j=1,math.ceil(n/2)-1 do
     local new_tape = tape_copy(old_tape, 115, 18)
     table.insert(tapes, new_tape)
     old_tape = new_tape
@@ -180,7 +134,7 @@ local function create_tapes(n)
     1, -1)
   table.insert(tapes, new_tape)
   old_tape = new_tape
-  for j=n/2+2,n do
+  for j=math.ceil(n/2)+2,n do
     local new_tape = tape_copy(old_tape, -115, 18)
     table.insert(tapes, new_tape)
     old_tape = new_tape
@@ -189,13 +143,14 @@ local function create_tapes(n)
   local last_tape_arm = tapes[n].arm1
   local arm_room = last_tape_arm[#last_tape_arm][1] - last_tape_arm[1][1]
   arm_room = math.max(arm_room - 30, 0)
-  behind_tapes = arm_room + math.ceil(n/2) * 115 + 1 - 200
 
+  behind_tapes = arm_room + math.ceil(n/2) * 115 - 100
   local DEBUG = false
   if DEBUG then behind_tapes = 0 end
+  behind_tapes = behind_tapes + (behind_tapes & 1)
 
   for j=0,n-1 do
-    if (j & 1 == 1) == (j >= n) then
+    if (j & 1 == 1) == (j >= math.ceil(n/2)) then
       g.putcells(blocker, behind_tapes, 102 + j * 18)
     else
       g.putcells(blocker, behind_tapes, 102 + j * 18 - 4, 1, 0, 0, -1)
@@ -206,13 +161,61 @@ end
 -- given a 2D array, initialize the sufficient number of tapes of sufficient
 -- length, and remove the right gliders to spell out the message
 local function initialize(data)
+  g.new("")
+
+  -- initial tiniest tape within world
+  g.putcells(g.parse([[
+  56bo$55bo2bo$42b2o10b5o10b2o$42b2o9b2ob3o10b2o$54bob2o$55b2o2$55b2o8b
+  2o$54bob2o6b3obo$53b2ob3o4bo4b3o$54b5o5b3obo$55bo2bo6b2o$56bo2$48bo30b
+  2o$48bobo28b2o$48b2o5$9b2o$2b3o4b2o50b2o$60b2o$bo3bo56bo$bo3bo31bo$2bo
+  bo31bo$2b3o31b3o$72b2o5b2o$71bo2bo3bo2bo$74b2ob2o$73bobobobo$73bobobob
+  o$2bo7bo60bo9bo$ob2o5b2obo53b2o2bo11bo$o3b2ob2o3bo54b2o$bo3bobo3bo54bo
+  7b2ob2o$2b3o3b3o14bo46bo2bobo2bo$25bobo44b3o3b3o$25b2o2$72b2o$72b2o3$
+  55bo$55b2o$54bobo4$22bo$23bo$21b3o$10b3o3b3o$9bo3bobo3bo$8bo3b2ob2o3bo
+  $8bob2o5b2obo22b2o$10bo7bo25b2o$43bo4$34bo$10b3o19bobo$10bobo20b2o$9bo
+  3bo15b2o$9bo3bo15b2o2$10b3o4b2o$17b2o$30bo5bo$29b3o3b3o$28b2o2bobo2b2o
+  $28b2ob2ob2ob2o$31b2ob2o$29bobo3bobo$28bo2bo3bo2bo$31bo3bo52b2o$28bobo
+  5bobo49b2o$29bo7bo3$30bo$29bobo2$27bo5bo$30bo$27b2o3b2o3$81b3o3b3o$27b
+  2o3b2o47b3o3b3o$30bo5b2o42bob2o3b2obo$27bo5bo2b2o42bob2o3b2obo$81b2o5b
+  2o$29bobo50bo5bo$30bo3$83b2ob2o$82bo5bo$80b2ob2ob5o$80b2ob2ob3ob2o$82b
+  o6b3o$88bobo$88b2o!
+  ]]))
+
+  -- note down locations of all components of initial tape
+  tapes = {
+    {
+      initial = {
+        {21,51,3,3},
+        {32,63,3,3},
+      },
+      arm1 = {
+        {43,57,3,3},
+        {54,45,3,3},
+        {66,34,3,3},
+      },
+      between = {
+        {60,22,3,3},
+      },
+      arm2 = {
+        {48,14,3,3},
+        {36,25,3,3},
+        {25,37,3,3},
+      },
+      reflector_n_p1 = {42,0,29,13},
+      reflector_n_p2 = {70,14,13,29},
+      duplicator = {0,21,21,50},
+      reflector_s = {27,66,12,32},
+      lwss_builder = {80,78,12,29},
+    }
+  }
+
   local rows = #data
   local columns = #(data[1])
   local lengthening = math.max(0, math.ceil((columns - 9) / 4))
   local actual_columns = lengthening * 4 + 9
 
   local function timing_offset(row)
-    local symmetric = row - math.ceil(rows / 2)
+    local symmetric = row - math.floor(rows / 2)
     if symmetric <= 0 then symmetric = symmetric - 1 end
     local offset = math.abs(symmetric) * 5
     if symmetric < 0 then offset = offset + 1 end
@@ -240,20 +243,37 @@ local function initialize(data)
 end
 
 local sign = {
-  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,},
-  {1,1,0,0,1,1,0,0,0,1,1,0,0,0,0,1,1,1,1,0,0,1,1,0,0,1,1,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,1,1,1,0,0,0,0,},
-  {1,1,0,0,1,1,0,0,1,1,1,1,0,0,0,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,0,0,0,0,0,1,1,1,1,0,0,1,1,0,0,1,1,0,0,0,1,1,1,0,0,0,1,1,1,0,0,},
-  {1,1,0,0,1,1,0,1,1,0,0,1,1,0,1,1,0,0,0,0,0,1,1,0,1,1,0,0,1,1,0,0,0,0,1,1,0,0,1,1,0,1,1,0,0,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,0,},
-  {1,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,1,1,0,0,1,1,0,1,1,1,1,1,0,0,0,1,0,0,1,0,0,0,1,0,0,1,0,},
-  {1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,},
-  {1,1,0,0,1,1,0,1,1,1,1,1,1,0,1,1,0,0,0,0,0,1,1,0,1,1,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,1,1,0,0,1,1,0,0,1,0,0,1,0,1,0,1,0,0,1,0,},
-  {1,1,0,0,1,1,0,1,1,0,0,1,1,0,0,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,0,0,1,1,0,0,1,0,0,1,0,1,0,1,0,0,1,0,},
-  {1,1,0,0,1,1,0,1,1,0,0,1,1,0,0,1,1,1,1,0,0,1,1,0,0,1,1,0,1,1,1,1,1,0,1,1,0,0,1,1,0,1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,},
-  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,},
-  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,},
+  {1,1,1,1,0,0,0,0,2,2,2,2,0,0,4,4,4,4,0,0,0,0,6,6,6,6,0,0,5,5,0,0,0,5,5,0,3,3,0,0,3,3,0,7,7,0,0,7,7,0,0,0,},
+  {1,1,1,1,1,1,0,2,2,2,2,2,2,0,4,4,4,4,4,4,0,6,6,6,6,6,6,0,5,5,5,0,5,5,5,0,3,3,0,0,3,3,0,7,7,0,0,7,7,0,0,0,},
+  {1,1,0,0,1,1,0,2,2,0,0,0,0,0,4,4,0,0,4,4,0,6,6,0,0,0,0,0,5,5,5,5,5,5,5,0,3,3,0,0,3,3,0,7,7,0,7,7,0,0,0,0,},
+  {1,1,0,0,1,1,0,2,2,0,0,0,0,0,4,4,0,0,4,4,0,6,6,0,0,0,0,0,5,5,5,5,5,5,5,0,3,3,3,3,3,3,0,7,7,7,7,0,0,0,0,0,},
+  {1,1,1,1,1,0,0,2,2,0,2,2,2,0,4,4,4,4,4,0,0,6,6,0,0,0,0,0,5,5,0,5,0,5,5,0,0,3,3,3,3,0,0,7,7,7,7,7,0,0,0,0,},
+  {1,1,1,1,1,0,0,2,2,0,2,2,2,0,4,4,0,0,4,4,0,6,6,0,0,0,0,0,5,5,0,0,0,5,5,0,0,0,3,3,0,0,0,7,7,0,7,7,7,0,0,0,},
+  {1,1,0,0,1,1,0,2,2,0,0,2,2,0,4,4,0,0,4,4,0,6,6,0,0,0,0,0,5,5,0,0,0,5,5,0,0,0,3,3,0,0,0,7,7,0,0,7,7,0,0,0,},
+  {1,1,0,0,1,1,0,2,2,2,2,2,2,0,4,4,4,4,4,4,0,6,6,6,6,6,6,0,5,5,0,0,0,5,5,0,0,0,3,3,0,0,0,7,7,0,0,7,7,0,0,0,},
+  {1,1,0,0,1,1,0,0,2,2,2,2,0,0,4,4,4,4,0,0,0,0,6,6,6,6,0,0,5,5,0,0,0,5,5,0,0,0,3,3,0,0,0,7,7,0,0,7,7,0,0,0,},
+  {7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,},
 }
 
-initialize(sign)
-g.fit()
-g.save("out.rle", "rle", false)
+red = {}
+green = {}
+blue = {}
+for row=1,#sign do
+  red[row] = {}
+  green[row] = {}
+  blue[row] = {}
+  for col=1,#(sign[row]) do
+    val = sign[row][col]
+    red[row][col] = val & 1
+    green[row][col] = (val & 2) / 2
+    blue[row][col] = (val & 4) / 4
+  end
+end
+
+initialize(red)
+g.save("red.rle", "rle", false)
+initialize(green)
+g.save("green.rle", "rle", false)
+initialize(blue)
+g.save("blue.rle", "rle", false)
 g.doevent("key q cmd")
