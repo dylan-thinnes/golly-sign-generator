@@ -1,7 +1,7 @@
 Given a matrix of rgb/cmyk values, generates a glider image that
 [life-framebuffer](https://github.com/dylan-thinnes/life-framebuffer) can run.
 
-Requires opencv2
+Requires Golly, Python3 with opencv2, and gcc
 
 Made for [Edinburgh Hacklab](https://ehlab.uk)
 
