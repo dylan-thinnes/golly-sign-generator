@@ -21,4 +21,4 @@ cat out.rle | ./rle-to-ppm > b.ppm
 
 python3 merge.py
 
-rm out.rle input.lua {r,g,b}.{ppm,lua}
+rm out.rle input.lua {r,g,b}.lua
