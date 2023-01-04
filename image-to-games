@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# Precompile our C utils
+gcc ppm-to-lua-dicts.c -o ppm-to-lua-dicts
+gcc rle-to-ppm.c -o rle-to-ppm
+
+# Generates {r,g,b}.lua
+cat $1 | ./ppm-to-lua-dicts
+
+cat r.lua | ./lua-dict-to-program > input.lua
+golly input.lua
+cat out.rle | ./rle-to-ppm > r.ppm
+
+cat g.lua | ./lua-dict-to-program > input.lua
+golly input.lua
+cat out.rle | ./rle-to-ppm > g.ppm
+
+cat b.lua | ./lua-dict-to-program > input.lua
+golly input.lua
+cat out.rle | ./rle-to-ppm > b.ppm
+
+python3 merge.py
+
+rm out.rle input.lua {r,g,b}.{ppm,lua}

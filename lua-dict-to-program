@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+cat ./generator.lua
+cat
+echo '''
+initialize(sign)
+g.save("out.rle", "rle", false)
+g.doevent("key q cmd")
+'''

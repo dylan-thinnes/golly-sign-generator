@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+(
+  echo 'local sign = {'
+  monobit-banner "$@" | tr '.@' '01' | sed -E 's/./\0,/g;s/^/  {/g;s/$/},/g;'
+  echo '}'
+) | ./lua-dict-to-program > input.lua
+golly input.lua
+cat out.rle | ./rle-to-ppm > out.ppm
+rm out.rle input.lua
