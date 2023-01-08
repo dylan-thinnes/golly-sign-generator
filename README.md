@@ -1,4 +1,4 @@
-Given a PPM P6 image, generates an image of a glider gun image that
+Given a PPM P6 image, generates an image of a glider gun that
 [life-framebuffer](https://github.com/dylan-thinnes/life-framebuffer) can run to
 produces the same original image in the form of LWSS gliders!
 
